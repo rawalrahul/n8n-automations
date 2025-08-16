@@ -1,0 +1,692 @@
+{
+  "name": "Substack",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "22f9288b-3f81-464c-ac47-3284ca3bbe05",
+      "name": "Chat Trigger",
+      "webhookId": "5571c97f-4622-48e6-ba87-e2e315ae5f8b"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude 4 Sonnet"
+        },
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        208
+      ],
+      "id": "93a9ff60-7c42-4a82-9d4c-df8ae7ff5a49",
+      "name": "Main Claude Model"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        208
+      ],
+      "id": "37b4e789-447c-485e-bfb1-59879f00cfe8",
+      "name": "Enhanced Memory Buffer"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Advanced research agent for newsletter content",
+        "text": "=You are an expert research AI specializing in newsletter-worthy content research. Gather engaging, current information that newsletter subscribers will find valuable.\n\nResearch Focus:\n1. Start with Perplexity for authoritative, current information\n2. Use Tavily for diverse perspectives and trending angles\n3. Look for surprising insights and data points\n4. Find expert quotes and personal stories\n5. Identify actionable takeaways\n\nTopic to research: {{ $fromAI(\"search_query\") }}\n\nProvide:\n- Compelling facts and insights\n- Recent trends and developments\n- Surprising statistics or findings\n- Expert opinions and quotes\n- Personal angle opportunities\n- Actionable takeaways for readers\n\nFocus on content that will make subscribers think 'I'm glad I read this!'",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        208
+      ],
+      "id": "584c07e1-f0e8-403d-8d7b-c0eeed32bc36",
+      "name": "Newsletter Research Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        464
+      ],
+      "id": "993a1c39-bd3d-41f0-be9b-e192b0663fd4",
+      "name": "Research Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Enhanced Tavily search for newsletter research",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $fromAI(\"search_topic\")}}\",\n  \"auto_parameters\": true,\n  \"topic\": \"general\",\n  \"search_depth\": \"advanced\",\n  \"chunks_per_source\": 4,\n  \"max_results\": 4,\n  \"include_answer\": true,\n  \"include_raw_content\": true,\n  \"include_images\": false,\n  \"exclude_domains\": [\"pinterest.com\", \"reddit.com\", \"quora.com\"]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        608,
+        464
+      ],
+      "id": "30256490-586f-48f3-9bf0-a379de5ddf7c",
+      "name": "Tavily Newsletter Search"
+    },
+    {
+      "parameters": {
+        "model": "sonar-pro",
+        "messages": {
+          "message": [
+            {
+              "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('message0_Text', `Research this topic for newsletter content. Focus on recent insights, expert perspectives, and subscriber-valuable information.`, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2
+        },
+        "requestOptions": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.perplexityTool",
+      "typeVersion": 1,
+      "position": [
+        752,
+        464
+      ],
+      "id": "c341d171-08cc-4fc2-98b3-23638733b790",
+      "name": "Perplexity Research"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Newsletter structure and title creator",
+        "text": "=You are an expert newsletter strategist specializing in Substack content. Create engaging titles and structures that drive opens and reads.\n\nYour task:\n1. Create 3 compelling subject line options\n2. Design a newsletter structure optimized for engagement\n3. Include hooks, personal touches, and clear value\n4. Plan for mobile email reading\n5. Add subscriber retention elements\n\nTopic: {{ $fromAI(\"search_query\") }}\n\nOutput format:\n**Subject Line Options:**\n1. [Curiosity-driven subject]\n2. [Value-focused subject]\n3. [Personal/Story subject]\n\n**Newsletter Structure:**\n- Personal Opening (hook/story)\n- Main Insight #1 (with data/example)\n- Main Insight #2 (with takeaway)\n- Main Insight #3 (with action item)\n- Personal Reflection/Opinion\n- Reader Engagement (question/poll)\n- Next Week Preview\n\nExplain why this structure will engage subscribers.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        208
+      ],
+      "id": "28a6dfc3-f71a-4d33-a13b-386d3fc9ab12",
+      "name": "Newsletter Structure Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        464
+      ],
+      "id": "bbf39b41-0220-4883-b65d-adeb02ef17f3",
+      "name": "Structure Model"
+    },
+    {
+      "parameters": {
+        "model": "sonar",
+        "messages": {
+          "message": [
+            {
+              "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('message0_Text', `Analyze newsletter engagement trends for this topic. What hooks and structures are working best?`, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.1
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexityTool",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        464
+      ],
+      "id": "08a24a1b-e6a4-4a3b-81e1-43b9783ad874",
+      "name": "Newsletter Trends"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Substack-optimized content writer",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('section_prompt', `You are a newsletter writer who creates engaging, personal content for Substack. Write like you're having a conversation with a smart friend.\n\nSubstack Writing Style:\n- Personal, conversational tone\n- Short paragraphs (1-3 sentences)\n- Include personal insights and opinions\n- Use stories and examples\n- Ask questions to engage readers\n- Add surprising facts or data\n- Include actionable takeaways\n- Write for mobile email reading\n- Use strategic bold text for skimming\n\nSection to write: [Section name]\nResearch data: [Provided research]\nPersonal angle: [Your unique perspective]\n\nWrite newsletter content that feels personal, valuable, and engaging.`, 'string') }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        208
+      ],
+      "id": "d8c5445e-9a95-44b2-b1a9-1584edf575b8",
+      "name": "Substack Writer Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.6
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        464
+      ],
+      "id": "7f9ce08b-20c8-401e-b447-2840224f599d",
+      "name": "Writer Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Newsletter image creator for Substack",
+        "text": "=You are a visual designer specializing in newsletter header images for Substack. Create professional, engaging images that work well in email.\n\nSubstack Image Guidelines:\n1. 16:9 aspect ratio (optimal for email)\n2. Clean, professional design\n3. High contrast for mobile viewing\n4. Newsletter-appropriate aesthetic\n5. Not too busy or distracting\n\nProcess:\n1. Analyze newsletter topic and tone\n2. Create compelling visual concept\n3. Generate image using AI\n4. Monitor creation status\n5. Return final image URL\n\nTopic: {{ $fromAI(\"topic\") }}\nTone: {{ $fromAI(\"tone\", \"professional, engaging\") }}\n\nCreate a newsletter header image that complements the content.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1456,
+        208
+      ],
+      "id": "f6edda9c-b512-48bb-a6d8-7b395096b655",
+      "name": "Newsletter Visual Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        },
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1504,
+        464
+      ],
+      "id": "0bb6eddc-0719-417b-87b3-8bae7fd923da",
+      "name": "Visual Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Generate newsletter header image",
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"input\": {\n      \"prompt\": \"{{ $fromAI(\"prompt\") }}, newsletter header style, clean professional design, email-friendly\",\n      \"go_fast\": true,\n      \"megapixels\": \"1\",\n      \"num_outputs\": 1,\n      \"aspect_ratio\": \"16:9\",\n      \"output_format\": \"webp\",\n      \"output_quality\": 85,\n      \"num_inference_steps\": 4\n    }\n  }",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        464
+      ],
+      "id": "716a8b8c-e965-48cc-913b-16e2389302fb",
+      "name": "Newsletter Image Generator"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Check image generation status",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status_url', ``, 'string') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1856,
+        464
+      ],
+      "id": "ff713f9b-6224-4bf9-9030-095e510080ee",
+      "name": "Image Status Checker"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Format content for Substack publication",
+        "text": "=You are a Substack publishing specialist. Format the newsletter content for optimal display and engagement on Substack.\n\nFormatting Tasks:\n1. Convert to Substack HTML format\n2. Add proper heading hierarchy\n3. Optimize paragraph breaks for mobile\n4. Add strategic bold/italic formatting\n5. Include engaging call-to-action\n6. Add social sharing elements\n7. Format for 6-10 minute read time\n\nContent to format: {{ $fromAI(\"draft_content\") }}\nImage URL: {{ $fromAI(\"header_image\", \"\") }}\n\nProvide:\n- Substack-ready HTML content\n- Optimized subtitle\n- Call-to-action suggestions\n- Engagement hooks",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1712,
+        208
+      ],
+      "id": "d125d38f-9759-4263-80bd-7d3c020ec246",
+      "name": "Substack Format Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        464
+      ],
+      "id": "5dea5b72-06cd-4d7e-97e5-2c2bbcb78c7c",
+      "name": "Format Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Create draft on Substack via email",
+        "method": "POST",
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"personalizations\": [{\n    \"to\": [{\n      \"email\": \"{{ $fromAI(\"substack_email\", \"your-publication@substack.com\") }}\"\n    }],\n    \"subject\": \"{{ $fromAI(\"article_title\") }}\"\n  }],\n  \"from\": {\n    \"email\": \"{{ $fromAI(\"sender_email\", \"your-email@domain.com\") }}\",\n    \"name\": \"Newsletter Bot\"\n  },\n  \"content\": [{\n    \"type\": \"text/html\",\n    \"value\": \"{{ $fromAI(\"formatted_content\") }}\"\n  }]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        208
+      ],
+      "id": "95c855a7-989d-449e-96bb-538c6c91f212",
+      "name": "Email to Substack"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Alternative: Create post using Substack's web interface automation",
+        "method": "POST",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('webhook_url', `your-custom-webhook-url`, 'string') }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"create_substack_post\",\n  \"title\": \"{{ $fromAI(\"article_title\") }}\",\n  \"subtitle\": \"{{ $fromAI(\"article_subtitle\", \"\") }}\",\n  \"content\": \"{{ $fromAI(\"formatted_content\") }}\",\n  \"cover_image\": \"{{ $fromAI(\"cover_image_url\", \"\") }}\",\n  \"draft\": {{ $fromAI(\"is_draft\", \"true\") }},\n  \"publication_url\": \"{{ $fromAI(\"substack_url\", \"your-publication.substack.com\") }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        208
+      ],
+      "id": "7b099459-c4ad-423b-a1a8-37e6506d02a5",
+      "name": "Webhook Publisher"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Substack publishing coordinator",
+        "text": "=You are a Substack publishing coordinator. Manage the newsletter creation and publishing process.\n\nPublishing Options:\n1. **Email Method**: Send formatted content to your Substack email address for draft creation\n2. **Webhook Method**: Send to custom webhook for automated browser automation\n3. **Manual Method**: Provide formatted content for copy-paste\n\nProcess:\n1. Format content using Substack Format Agent\n2. Choose publishing method based on user preference\n3. Execute publication workflow\n4. Provide success confirmation and next steps\n\nNewsletter details:\n- Title: {{ $fromAI(\"title\") }}\n- Content: {{ $fromAI(\"content\") }}\n- Method: {{ $fromAI(\"publish_method\", \"email\") }}\n- Publication: {{ $fromAI(\"substack_url\", \"\") }}\n\nCoordinate the publishing process and report results.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        64
+      ],
+      "id": "13d83314-8bf6-4809-a77c-391374e753be",
+      "name": "Publishing Coordinator"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2064,
+        304
+      ],
+      "id": "a9b5c5cf-528b-4c0f-b82b-a7a0f3688471",
+      "name": "Publishing Model"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an expert newsletter content strategist and Substack publishing orchestrator. You lead a team of specialized AI agents to create compelling newsletter content for Substack.\n\n**Your Specialized Team:**\n1. **Newsletter Research Agent** - Finds engaging, subscriber-worthy content\n2. **Newsletter Structure Agent** - Creates compelling subject lines and structures\n3. **Substack Writer Agent** - Writes personal, conversational newsletter content\n4. **Newsletter Visual Agent** - Creates professional header images\n5. **Substack Format Agent** - Optimizes content for Substack platform\n6. **Publishing Coordinator** - Manages the publication process\n\n**Newsletter Creation Workflow:**\n\n**Phase 1: Planning & Research**\n1. Receive newsletter topic/theme from user\n2. Use Newsletter Research Agent to gather engaging insights\n3. Use Newsletter Structure Agent to create compelling structure\n4. Present subject line options and outline for approval\n\n**Phase 2: Content Creation**\n5. Write personal opening hook (150-200 words)\n6. Create main content sections using research:\n   - Insight 1 with data/example (300-400 words)\n   - Insight 2 with takeaway (300-400 words) \n   - Insight 3 with action item (300-400 words)\n7. Add personal reflection and reader engagement\n8. Write compelling conclusion with next week preview\n\n**Phase 3: Visual & Publishing**\n9. Use Newsletter Visual Agent for header image\n10. Use Substack Format Agent for final formatting\n11. Use Publishing Coordinator for Substack delivery\n\n**Substack Newsletter Optimization:**\n- **Length**: 1200-2000 words (6-10 minute read)\n- **Tone**: Personal, conversational, like writing to a friend\n- **Structure**: Hook → Insights → Personal take → Engagement → Preview\n- **Format**: Short paragraphs, bold text, bullet points, mobile-friendly\n- **Engagement**: Questions, polls, reply encouragement\n- **Value**: Actionable insights, surprising data, personal stories\n\n**Publishing Methods:**\n1. **Email Draft**: Send to your Substack email for draft creation\n2. **Webhook**: Use custom automation for direct publishing\n3. **Manual**: Provide formatted content for copy-paste\n\n**Content Types:**\n- **Weekly insights** - Industry trends and analysis\n- **Deep dives** - Comprehensive topic exploration  \n- **Curated roundups** - Best resources with commentary\n- **Personal essays** - Thought leadership content\n- **How-to guides** - Educational newsletter content\n\n**Quality Standards:**\n- Authentic personal voice\n- Subscriber-first value\n- Engaging storytelling\n- Clear actionable insights\n- Mobile email optimization\n- Strong retention focus\n\n**User Commands:**\n- \"Create newsletter: [topic]\" - Full workflow\n- \"Draft newsletter: [topic]\" - Create draft only\n- \"Research: [topic]\" - Research phase only\n- \"Email newsletter: [topic]\" - Create and send to Substack email\n\n**Setup Requirements:**\n- Substack publication URL\n- Email method OR webhook setup\n- SendGrid API for email method (optional)\n\nStart by asking for the newsletter topic and preferred publishing method."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        656,
+        0
+      ],
+      "id": "dbd42a45-82f4-45e7-b958-cffc5200e709",
+      "name": "Substack Newsletter Orchestrator"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Claude Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enhanced Memory Buffer": {
+      "ai_memory": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter Research Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Newsletter Research Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily Newsletter Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Newsletter Research Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity Research": {
+      "ai_tool": [
+        [
+          {
+            "node": "Newsletter Research Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter Structure Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Newsletter Structure Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter Trends": {
+      "ai_tool": [
+        [
+          {
+            "node": "Newsletter Structure Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Substack Writer Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Substack Writer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter Visual Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Visual Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Newsletter Visual Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter Image Generator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Newsletter Visual Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Status Checker": {
+      "ai_tool": [
+        [
+          {
+            "node": "Newsletter Visual Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Substack Format Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Substack Format Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email to Substack": {
+      "ai_tool": [
+        [
+          {
+            "node": "Publishing Coordinator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Publisher": {
+      "ai_tool": [
+        [
+          {
+            "node": "Publishing Coordinator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publishing Coordinator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substack Newsletter Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publishing Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Publishing Coordinator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cb674834-6f5f-4928-bf0b-a82a8971e969",
+  "meta": {
+    "instanceId": "4bbbc190140f5f9a2f568839a7004a509e4eee8a704f906a77aa9926bf99954e"
+  },
+  "id": "VnlGtiwfKEphHzes",
+  "tags": []
+}
