@@ -1,0 +1,763 @@
+{
+  "name": "Ethical Job Intelligence Service",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "job-intelligence-webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -1400,
+        -200
+      ],
+      "id": "whatsapp-webhook",
+      "name": "WhatsApp Webhook",
+      "webhookId": "job-intelligence-service"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ]
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1400,
+        -50
+      ],
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514"
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 4000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -1200,
+        -125
+      ],
+      "id": "main-claude",
+      "name": "Main Claude Model"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 25
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1050,
+        -125
+      ],
+      "id": "conversation-memory",
+      "name": "Conversation Memory"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Resume parser that extracts skills and experience for job matching",
+        "text": "=You are an expert resume analyzer that extracts professional information for job matching.\n\nAnalyze this resume: {{ $fromAI(\"resume_content\") }}\n\nExtract and structure:\n1. **Personal Information:**\n   - Name, contact details, location\n   - LinkedIn profile, portfolio links\n\n2. **Professional Profile:**\n   - Current job title and company\n   - Total years of experience\n   - Industry/field expertise\n   - Seniority level (entry/mid/senior/executive)\n\n3. **Skills Analysis:**\n   - Technical skills (programming, tools, software)\n   - Industry-specific skills\n   - Soft skills and competencies\n   - Certifications and licenses\n\n4. **Experience Summary:**\n   - Key job titles and progression\n   - Industries worked in\n   - Notable achievements\n   - Salary expectations (if mentioned)\n\n5. **Job Preferences:**\n   - Preferred role types\n   - Industry interests\n   - Geographic preferences\n   - Work arrangement preferences\n\nProvide structured data for intelligent job matching across all industries.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -900,
+        -125
+      ],
+      "id": "resume-analyzer",
+      "name": "Smart Resume Analyzer"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -950,
+        100
+      ],
+      "id": "analyzer-model",
+      "name": "Analyzer Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Extract text from uploaded documents",
+        "method": "POST",
+        "url": "https://api.documentparser.io/v1/extract",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "formData",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $fromAI(\"file_data\") }}"
+            },
+            {
+              "name": "output_format",
+              "value": "text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -800,
+        100
+      ],
+      "id": "document-parser",
+      "name": "Document Parser"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Multi-platform job discovery engine for fresh opportunities",
+        "text": "=You are an intelligent job discovery system that finds fresh job postings across multiple platforms.\n\nUser Profile: {{ $fromAI(\"user_profile\") }}\nJob Preferences: {{ $fromAI(\"job_preferences\") }}\nTime Filter: Last 24 hours only\n\nSearch Strategy:\n1. **Multi-Platform Search:**\n   - LinkedIn Jobs API\n   - Indeed job feeds\n   - Company career pages\n   - Industry-specific job boards\n   - Remote work platforms\n\n2. **Smart Filtering:**\n   - Posted within last 24 hours\n   - Match user's skill requirements\n   - Align with experience level\n   - Meet salary expectations\n   - Location preferences\n\n3. **Job Scoring (1-100):**\n   - Skills match (40%)\n   - Experience alignment (30%)\n   - Salary fit (20%)\n   - Company culture fit (10%)\n\n4. **Quality Control:**\n   - Only return jobs scoring 70+\n   - Remove duplicate postings\n   - Verify job posting authenticity\n   - Filter out recruiting agencies if preferred\n\nFor each relevant job, provide:\n- Job title and company name\n- Match score with reasoning\n- Salary range (if available)\n- Location and remote options\n- Key requirements alignment\n- Application deadline\n- Direct application URL\n- Why it's a good fit\n\nPrioritize quality over quantity - better to find 3 perfect matches than 20 mediocre ones.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -650,
+        -125
+      ],
+      "id": "job-discovery-engine",
+      "name": "Job Discovery Engine"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -700,
+        100
+      ],
+      "id": "discovery-model",
+      "name": "Discovery Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "LinkedIn Jobs API integration",
+        "method": "GET",
+        "url": "https://api.linkedin.com/v2/jobSearch",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "={{ $fromAI(\"search_keywords\") }}"
+            },
+            {
+              "name": "locationId",
+              "value": "={{ $fromAI(\"location_id\", \"103644278\") }}"
+            },
+            {
+              "name": "dateSincePosted",
+              "value": "past-24h"
+            },
+            {
+              "name": "sortBy",
+              "value": "DD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -550,
+        100
+      ],
+      "id": "linkedin-jobs",
+      "name": "LinkedIn Jobs API"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Indeed job feed scraper",
+        "method": "POST",
+        "url": "https://api.scrapfly.io/scrape",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"https://www.indeed.com/jobs?q={{ $fromAI(\\\"search_query\\\") }}&fromage=1&sort=date\",\n  \"render_js\": true,\n  \"auto_scroll\": true,\n  \"country\": \"US\",\n  \"extraction_rules\": {\n    \"jobs\": {\n      \"selector\": \".jobsearch-SerpJobCard\",\n      \"type\": \"list\",\n      \"fields\": {\n        \"title\": {\"selector\": \".jobTitle a span\"},\n        \"company\": {\"selector\": \".companyName\"},\n        \"location\": {\"selector\": \".companyLocation\"},\n        \"salary\": {\"selector\": \".salary-snippet\"},\n        \"summary\": {\"selector\": \".job-snippet\"},\n        \"link\": {\"selector\": \".jobTitle a\", \"attribute\": \"href\"}\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        100
+      ],
+      "id": "indeed-scraper",
+      "name": "Indeed Job Scraper"
+    },
+    {
+      "parameters": {
+        "model": "sonar-pro",
+        "messages": {
+          "message": [
+            {
+              "content": "={{ $fromAI('job_research_query', 'Find recent job postings and hiring trends', 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "n8n-nodes-base.perplexityTool",
+      "typeVersion": 1,
+      "position": [
+        -250,
+        100
+      ],
+      "id": "job-market-research",
+      "name": "Job Market Research"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Company intelligence and research system",
+        "text": "=You are a company research specialist that provides comprehensive intelligence about potential employers.\n\nCompany to research: {{ $fromAI(\"company_name\") }}\nJob Role: {{ $fromAI(\"job_role\") }}\n\nResearch Areas:\n\n1. **Company Overview:**\n   - Business model and main products/services\n   - Company size and growth stage\n   - Recent funding rounds or financial news\n   - Leadership team and key executives\n\n2. **Company Culture:**\n   - Mission, vision, and values\n   - Work environment and culture insights\n   - Employee reviews from Glassdoor\n   - Diversity and inclusion initiatives\n   - Work-life balance reputation\n\n3. **Financial Health:**\n   - Recent revenue/growth metrics\n   - Funding status and investors\n   - Stock performance (if public)\n   - Layoffs or hiring spree news\n\n4. **Role-Specific Intelligence:**\n   - Team structure for this role\n   - Typical career progression\n   - Skills and technologies used\n   - Salary ranges for similar positions\n   - Remote work policies\n\n5. **Recent News & Trends:**\n   - Recent press releases\n   - Product launches or major announcements\n   - Industry positioning\n   - Challenges or opportunities\n\n6. **Application Strategy:**\n   - Best approach for this company\n   - Key values to emphasize\n   - Interview process insights\n   - Decision timeline expectations\n\nProvide actionable intelligence that helps candidates understand if this is a good fit and how to position themselves effectively.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        -125
+      ],
+      "id": "company-intelligence",
+      "name": "Company Intelligence Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -450,
+        100
+      ],
+      "id": "intelligence-model",
+      "name": "Intelligence Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Application assistance without automation",
+        "text": "=You are an application assistance specialist that helps users prepare for job applications without automating the submission process.\n\nUser Profile: {{ $fromAI(\"user_profile\") }}\nJob Details: {{ $fromAI(\"job_details\") }}\nCompany Research: {{ $fromAI(\"company_research\") }}\n\nProvide Application Assistance:\n\n1. **Cover Letter Draft:**\n   - Personalized opening that references company research\n   - Highlight most relevant skills and experience\n   - Include specific examples and achievements\n   - Company-specific value proposition\n   - Professional closing with clear next steps\n   - Note: \"DRAFT - Please review and customize before sending\"\n\n2. **Resume Optimization Tips:**\n   - Keywords to include from job description\n   - Skills to emphasize for this role\n   - Experience highlights to feature\n   - Formatting suggestions for ATS compatibility\n\n3. **Interview Preparation:**\n   - Likely interview questions for this role\n   - Company-specific questions to expect\n   - STAR method examples using user's experience\n   - Questions to ask the interviewer\n   - Research talking points about the company\n\n4. **Application Strategy:**\n   - Best time to apply\n   - Who to connect with on LinkedIn\n   - Follow-up timeline and approach\n   - Portfolio or work samples to include\n\n5. **Next Steps Checklist:**\n   - [ ] Review and customize cover letter\n   - [ ] Update resume with suggested keywords\n   - [ ] Research interviewer backgrounds\n   - [ ] Prepare portfolio/work samples\n   - [ ] Apply through company website\n   - [ ] Follow up appropriately\n\nProvide helpful guidance while making it clear that all application steps should be done manually by the user.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -150,
+        -125
+      ],
+      "id": "application-assistant",
+      "name": "Application Assistant"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.6
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -200,
+        100
+      ],
+      "id": "assistant-model",
+      "name": "Assistant Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "User interaction and command handler",
+        "text": "=You are a user interaction specialist that handles commands and responses in the job intelligence service.\n\nUser Message: {{ $fromAI(\"user_message\") }}\nContext: {{ $fromAI(\"context\") }}\n\nHandle these interaction types:\n\n**Profile Setup Commands:**\n- Resume upload and analysis\n- Job preferences configuration\n- Notification settings\n- Account management\n\n**Job Discovery Commands:**\n- INTERESTED [job_id] - Get detailed info and application help\n- SKIP [job_id] - Mark as not interested\n- MORE_INFO [job_id] - Get company research\n- APPLY_HELP [job_id] - Get application assistance\n- PAUSE - Stop job notifications\n- RESUME - Restart job notifications\n\n**Status Commands:**\n- STATUS - Current job alert status\n- STATS - Personal job search analytics\n- HISTORY - Recently shown jobs\n- SETTINGS - Modify preferences\n\n**Discovery Commands:**\n- SEARCH [query] - Manual job search\n- SALARY [range] - Update salary expectations\n- LOCATION [location] - Change location preferences\n- REMOTE [yes/no] - Remote work preference\n\n**Help Commands:**\n- HELP - Show command list\n- SUPPORT - Get human support\n- FAQ - Frequently asked questions\n\nFor each command, provide:\n1. Immediate acknowledgment\n2. Relevant action or information\n3. Next suggested steps\n4. Available follow-up commands\n\nMaintain conversational, helpful tone while being efficient and actionable.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        100,
+        -125
+      ],
+      "id": "interaction-handler",
+      "name": "User Interaction Handler"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        50,
+        100
+      ],
+      "id": "interaction-model",
+      "name": "Interaction Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "User preference and job tracking database",
+        "method": "POST",
+        "url": "={{ $credentials.database_url }}/api/job-intelligence",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"{{ $fromAI(\\\"db_action\\\") }}\",\n  \"user_id\": \"{{ $fromAI(\\\"user_id\\\") }}\",\n  \"data\": {{ $fromAI(\\\"data\\\") }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        250,
+        100
+      ],
+      "id": "user-database",
+      "name": "User Database"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Smart notification system for job alerts",
+        "text": "=You are an intelligent notification system that sends engaging job alerts via WhatsApp and Telegram.\n\nNotification Type: {{ $fromAI(\"notification_type\") }}\nUser Contact: {{ $fromAI(\"user_contact\") }}\nData: {{ $fromAI(\"notification_data\") }}\n\nNotification Templates:\n\n**New Job Alerts:**\n```\n🎯 **{{ count }} New Jobs Match Your Profile!**\n\n**{{ job_title }} @ {{ company }}**\n📊 Match: {{ match_score }}% | 💰 {{ salary }} | 📍 {{ location }}\n⭐ Posted {{ time_ago }}\n💡 Great fit: {{ key_matches }}\n\nCommands:\n💼 INTERESTED {{ job_id }} - Get application help\n👀 MORE_INFO {{ job_id }} - Company research  \n❌ SKIP {{ job_id }} - Not interested\n```\n\n**Weekly Summary:**\n```\n📊 **Weekly Job Search Update**\n\n🔍 Jobs Found: {{ jobs_found }}\n💼 Interested: {{ interested_count }}\n📧 Applications Helped: {{ applications }}\n📈 Average Match Score: {{ avg_score }}%\n\n🏆 **Top Opportunity This Week:**\n{{ top_job_summary }}\n\nCommands: STATUS, SETTINGS, HELP\n```\n\n**Application Assistance:**\n```\n📝 **Application Package Ready!**\n\nFor: **{{ job_title }} @ {{ company }}**\n\n✅ Custom cover letter draft\n✅ Resume optimization tips\n✅ Interview prep guide\n✅ Company research summary\n\n📎 Ready to apply at: {{ application_url }}\n\nGood luck! 🍀\n```\n\n**Market Intelligence:**\n```\n💡 **Job Market Insight**\n\n{{ insight_text }}\n\n📈 Trending skills in your field:\n{{ trending_skills }}\n\n💰 Salary trends: {{ salary_trends }}\n\nCommands: SEARCH, UPDATE_SKILLS\n```\n\nFormat messages for mobile reading with emojis, clear structure, and actionable commands.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        -125
+      ],
+      "id": "smart-notifications",
+      "name": "Smart Notification System"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        350,
+        100
+      ],
+      "id": "notification-model",
+      "name": "Notification Model"
+    },
+    {
+      "parameters": {
+        "toolDescription": "WhatsApp Business API messenger",
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/{{ $credentials.whatsapp_phone_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $fromAI(\\\"recipient_phone\\\") }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $fromAI(\\\"message_text\\\") }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        550,
+        100
+      ],
+      "id": "whatsapp-messenger",
+      "name": "WhatsApp Messenger"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $fromAI(\"telegram_chat_id\") }}",
+        "text": "={{ $fromAI(\"message_text\") }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": true
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        700,
+        100
+      ],
+      "id": "telegram-messenger",
+      "name": "Telegram Messenger"
+    },
+    {
+      "parameters": {
+        "cron": "0 */4 * * *",
+        "triggerAtStartup": false
+      },
+      "type": "n8n-nodes-base.cronTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1400,
+        100
+      ],
+      "id": "job-monitoring-schedule",
+      "name": "Job Monitoring Schedule"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the Job Intelligence Service Orchestrator - an ethical AI assistant that helps people discover relevant job opportunities without automating applications.\n\n**Core Mission:**\nHelp users find perfect job matches by monitoring multiple platforms, analyzing opportunities, and providing intelligent notifications and application assistance.\n\n**What You DO:**\n✅ Monitor job boards for fresh postings (last 24 hours)\n✅ Analyze job-to-profile matching with scoring\n✅ Send intelligent job alerts via WhatsApp/Telegram\n✅ Provide company research and market intelligence\n✅ Generate application assistance (cover letter drafts, interview prep)\n✅ Track user preferences and job interest patterns\n✅ Offer career guidance and market insights\n\n**What You DON'T DO:**\n❌ Never auto-submit job applications\n❌ Never fill out forms automatically\n❌ Never impersonate users on job platforms\n❌ Never violate platform terms of service\n\n**Workflow Process:**\n\n**Phase 1: User Onboarding**\n1. User uploads resume via WhatsApp/Telegram\n2. Extract skills, experience, and career profile\n3. Collect job search preferences (salary, location, role types)\n4. Set up personalized job monitoring alerts\n\n**Phase 2: Intelligent Job Discovery**\n5. Monitor multiple platforms every 4 hours for new postings\n6. Apply smart filtering (24-hour freshness, relevance matching)\n7. Score jobs using AI matching algorithm (skills 40%, experience 30%, salary 20%, culture 10%)\n8. Only surface jobs scoring 70+ for quality control\n\n**Phase 3: Smart Notifications**\n9. Send mobile-optimized job alerts with rich context\n10. Include match reasoning, company insights, and direct links\n11. Provide interactive commands (INTERESTED, SKIP, MORE_INFO)\n12. Track user engagement and refine recommendations\n\n**Phase 4: Application Assistance**\n13. Generate personalized cover letter drafts for review\n14. Provide company research and interview preparation\n15. Suggest resume optimizations for specific roles\n16. Offer application strategy and timeline guidance\n\n**Universal Industry Support:**\nSupport job seekers across ALL professions - technology, healthcare, finance, education, sales, marketing, legal, engineering, operations, creative fields, and more.\n\n**Smart Matching Criteria:**\n- Technical and soft skills alignment\n- Experience level and career progression fit\n- Salary range compatibility\n- Geographic and remote work preferences\n- Company size and culture preferences\n- Industry background and interests\n\n**User Interaction Commands:**\n- **Job Actions**: INTERESTED, SKIP, MORE_INFO, APPLY_HELP\n- **Settings**: PAUSE, RESUME, SETTINGS, SALARY, LOCATION\n- **Discovery**: SEARCH [query], STATUS, STATS, HISTORY\n- **Support**: HELP, FAQ, SUPPORT\n\n**Quality Standards:**\n- Only recommend high-quality job matches (70+ score)\n- Provide actionable, personalized guidance\n- Maintain professional, helpful communication\n- Respect user privacy and preferences\n- Focus on long-term career success, not just quick applications\n\n**Ethical Guidelines:**\n- Always be transparent about being an AI service\n- Never mislead about automation capabilities\n- Respect job platform terms of service\n- Encourage authentic, human-driven applications\n- Provide genuine value through intelligence and assistance\n\n**Success Metrics:**\n- Quality of job matches (user engagement with recommendations)\n- Application success rates (interviews, offers)\n- User satisfaction and continued service usage\n- Time saved in job discovery and preparation\n\nYou are a trusted career assistant that combines AI intelligence with human authenticity to help users find their ideal opportunities ethically and effectively."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -750,
+        -125
+      ],
+      "id": "main-orchestrator",
+      "name": "Job Intelligence Orchestrator"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Monitoring Schedule": {
+      "main": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Claude Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smart Resume Analyzer": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyzer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Smart Resume Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Parser": {
+      "ai_tool": [
+        [
+          {
+            "node": "Smart Resume Analyzer",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Discovery Engine": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discovery Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Job Discovery Engine",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Jobs API": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Discovery Engine",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Indeed Job Scraper": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Discovery Engine",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Market Research": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Discovery Engine",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Intelligence Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intelligence Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Company Intelligence Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Application Assistant": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assistant Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Application Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Interaction Handler": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interaction Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "User Interaction Handler",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Database": {
+      "ai_tool": [
+        [
+          {
+            "node": "User Interaction Handler",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smart Notification System": {
+      "ai_tool": [
+        [
+          {
+            "node": "Job Intelligence Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notification Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Smart Notification System",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Messenger": {
+      "ai_tool": [
+        [
+          {
+            "node": "Smart Notification System",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Messenger": {
+      "ai_tool": [
+        [
+          {
+            "node": "Smart Notification System",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "job-intelligence-v1.0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ethical-job-intelligence-service"
+  },
+  "id": "JobIntelligenceService",
+  "tags": ["jobs", "intelligence", "ethical", "whatsapp", "telegram", "discovery"]
+}
