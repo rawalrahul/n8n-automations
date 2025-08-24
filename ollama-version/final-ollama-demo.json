@@ -1,0 +1,94 @@
+{
+  "name": "Ollama Demo - Working",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-input",
+      "name": "Input Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "options": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gemma3:1b"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.body.prompt || 'Write a professional email response' }}"
+            },
+            {
+              "name": "stream",
+              "value": false
+            }
+          ]
+        }
+      },
+      "id": "ollama-ai",
+      "name": "Gemma3 AI Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true, \"ai_response\": \"{{ $json.response }}\", \"model_used\": \"gemma3:1b\", \"cost\": \"$0.00 - Local Processing\"}"
+      },
+      "id": "response-output",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [600, 300]
+    }
+  ],
+  "connections": {
+    "webhook-input": {
+      "main": [
+        [
+          {
+            "node": "ollama-ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ollama-ai": {
+      "main": [
+        [
+          {
+            "node": "response-output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["demo", "ollama"],
+  "triggerCount": 1,
+  "updatedAt": "2025-08-24T09:30:00.000Z",
+  "versionId": "1.2.0"
+}
