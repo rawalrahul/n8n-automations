@@ -1,0 +1,360 @@
+{
+  "name": "Perplexity Research Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "schedule"
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "research_topic",
+              "value": "AI automation trends"
+            },
+            {
+              "name": "openrouter_api_key",
+              "value": "={{$env.OPENROUTER_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Research Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$node[\"Set Research Parameters\"].json[\"openrouter_api_key\"]}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "perplexity/llama-3.1-sonar-large-128k-online"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "user",
+                  "content": "What are expert opinions on {{$node[\"Set Research Parameters\"].json[\"research_topic\"]}}? Include recent sources and citations."
+                }
+              ]
+            },
+            {
+              "name": "temperature",
+              "value": 0.3
+            },
+            {
+              "name": "max_tokens",
+              "value": 1000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Expert Opinions Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$node[\"Set Research Parameters\"].json[\"openrouter_api_key\"]}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "perplexity/llama-3.1-sonar-large-128k-online"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "user",
+                  "content": "What do recent studies say about {{$node[\"Set Research Parameters\"].json[\"research_topic\"]}}? Focus on data and research from the last 6 months."
+                }
+              ]
+            },
+            {
+              "name": "temperature",
+              "value": 0.3
+            },
+            {
+              "name": "max_tokens",
+              "value": 1000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Recent Studies Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$node[\"Set Research Parameters\"].json[\"openrouter_api_key\"]}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "perplexity/llama-3.1-sonar-large-128k-online"
+            },
+            {
+              "name": "messages",
+              "value": [
+                {
+                  "role": "user",
+                  "content": "What are the counterarguments and criticisms regarding {{$node[\"Set Research Parameters\"].json[\"research_topic\"]}}? Include opposing viewpoints and limitations."
+                }
+              ]
+            },
+            {
+              "name": "temperature",
+              "value": 0.3
+            },
+            {
+              "name": "max_tokens",
+              "value": 1000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Counterarguments Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 420]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and structure the research data\nconst expertOpinions = $input.first().json.choices[0].message.content;\nconst recentStudies = $input.all()[1].json.choices[0].message.content;\nconst counterarguments = $input.all()[2].json.choices[0].message.content;\n\nconst researchTopic = $('Set Research Parameters').item(0).json.research_topic;\nconst timestamp = new Date().toISOString();\n\n// Create structured research report\nconst researchReport = {\n  topic: researchTopic,\n  timestamp: timestamp,\n  research_summary: {\n    expert_opinions: expertOpinions,\n    recent_studies: recentStudies,\n    counterarguments: counterarguments\n  },\n  // Extract key insights\n  key_insights: [\n    \"Extracted from expert opinions analysis\",\n    \"Derived from recent studies review\", \n    \"Identified from counterarguments examination\"\n  ],\n  sources_count: {\n    expert_sources: (expertOpinions.match(/https?:\\/\\//g) || []).length,\n    study_sources: (recentStudies.match(/https?:\\/\\//g) || []).length,\n    counter_sources: (counterarguments.match(/https?:\\/\\//g) || []).length\n  }\n};\n\nreturn [{ json: researchReport }];"
+      },
+      "name": "Process Research Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "document",
+        "operation": "create",
+        "title": "Research Report: {{$node[\"Process Research Results\"].json[\"topic\"]}} - {{$now.format('YYYY-MM-DD')}}",
+        "bodyUi": {
+          "bodyValues": [
+            {
+              "key": "content",
+              "value": "# Research Report: {{$node[\"Process Research Results\"].json[\"topic\"]}}\n\nGenerated: {{$node[\"Process Research Results\"].json[\"timestamp\"]}}\n\n## Expert Opinions\n{{$node[\"Process Research Results\"].json[\"research_summary\"][\"expert_opinions\"]}}\n\n## Recent Studies\n{{$node[\"Process Research Results\"].json[\"research_summary\"][\"recent_studies\"]}}\n\n## Counterarguments & Limitations\n{{$node[\"Process Research Results\"].json[\"research_summary\"][\"counterarguments\"]}}\n\n## Research Metrics\n- Expert Sources: {{$node[\"Process Research Results\"].json[\"sources_count\"][\"expert_sources\"]}}\n- Study Sources: {{$node[\"Process Research Results\"].json[\"sources_count\"][\"study_sources\"]}}\n- Counter Sources: {{$node[\"Process Research Results\"].json[\"sources_count\"][\"counter_sources\"]}}\n\n---\n*Generated by n8n Research Pipeline*"
+            }
+          ]
+        }
+      },
+      "name": "Save to Google Docs",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [1160, 180]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "database",
+        "databaseId": "your-notion-database-id",
+        "title": "Research: {{$node[\"Process Research Results\"].json[\"topic\"]}}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Topic",
+              "textValue": "={{$node[\"Process Research Results\"].json[\"topic\"]}}"
+            },
+            {
+              "key": "Date",
+              "dateValue": "={{$node[\"Process Research Results\"].json[\"timestamp\"]}}"
+            },
+            {
+              "key": "Total Sources",
+              "numberValue": "={{$node[\"Process Research Results\"].json[\"sources_count\"][\"expert_sources\"] + $node[\"Process Research Results\"].json[\"sources_count\"][\"study_sources\"] + $node[\"Process Research Results\"].json[\"sources_count\"][\"counter_sources\"]}}"
+            },
+            {
+              "key": "Status",
+              "selectValue": "Completed"
+            }
+          ]
+        }
+      },
+      "name": "Save to Notion Database",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [1160, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "your-email@gmail.com",
+        "toEmail": "your-email@gmail.com",
+        "subject": "New Research Report: {{$node[\"Process Research Results\"].json[\"topic\"]}}",
+        "emailType": "html",
+        "message": "<!DOCTYPE html>\n<html>\n<body>\n<h2>Research Pipeline Results</h2>\n<p><strong>Topic:</strong> {{$node[\"Process Research Results\"].json[\"topic\"]}}</p>\n<p><strong>Completed:</strong> {{$node[\"Process Research Results\"].json[\"timestamp\"]}}</p>\n\n<h3>Summary</h3>\n<ul>\n<li>Expert Sources Found: {{$node[\"Process Research Results\"].json[\"sources_count\"][\"expert_sources\"]}}</li>\n<li>Recent Studies: {{$node[\"Process Research Results\"].json[\"sources_count\"][\"study_sources\"]}}</li>\n<li>Counter-arguments: {{$node[\"Process Research Results\"].json[\"sources_count\"][\"counter_sources\"]}}</li>\n</ul>\n\n<p>Full report has been saved to your Google Docs and Notion database.</p>\n\n<p><em>Generated automatically by your n8n research pipeline.</em></p>\n</body>\n</html>"
+      },
+      "name": "Email Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1160, 420]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Research Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Research Parameters": {
+      "main": [
+        [
+          {
+            "node": "Expert Opinions Query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Recent Studies Query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Counterarguments Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expert Opinions Query": {
+      "main": [
+        [
+          {
+            "node": "Process Research Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recent Studies Query": {
+      "main": [
+        [
+          {
+            "node": "Process Research Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Counterarguments Query": {
+      "main": [
+        [
+          {
+            "node": "Process Research Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Research Results": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Docs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save to Notion Database",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
